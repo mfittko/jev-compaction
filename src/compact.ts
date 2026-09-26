@@ -114,7 +114,8 @@ export function decideCall(
   return { ...base, action: 'drop_call', reason: 'call_dropped' };
 }
 
-async function askBatch(
+/** Asks one batch of calls and reads its two `noul` probabilities. */
+export async function askBatch(
   asker: JevAsker,
   state: CompactionState,
   batch: readonly ToolCall[],
@@ -132,7 +133,7 @@ async function askBatch(
   );
 }
 
-function truncatedResultText(text: string, isError: boolean, headChars: number): string {
+export function truncatedResultText(text: string, isError: boolean, headChars: number): string {
   if (text.length <= headChars + 120) return text;
   const head = headChars > 0 ? `${text.slice(0, headChars)}\n` : '';
   return `${head}[fast-jev-compaction truncated ${text.length - headChars} chars of this tool result${

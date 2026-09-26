@@ -4,6 +4,16 @@
   "description": "Continuous, verbatim context compaction for LLM agents using TypeSafe's Jev model.",
   "type": "module",
   "license": "MIT",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "claude-code-plugin",
+    "compaction",
+    "context"
+  ],
+  "pi": {
+    "extensions": ["./pi/extension.ts"]
+  },
   "engines": {
     "node": ">=18"
   },
@@ -15,15 +25,18 @@
   },
   "files": [
     "dist",
+    "pi",
+    "src",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit && npm run typecheck:hooks",
+    "typecheck": "tsc --noEmit && npm run typecheck:hooks && npm run typecheck:pi",
     "test": "vitest run",
     "demo": "tsx examples/demo.ts",
     "typecheck:hooks": "tsc -p tsconfig.hooks.json",
+    "typecheck:pi": "tsc -p tsconfig.pi.json",
     "validate:plugin": "claude plugin validate .claude-plugin/plugin.json"
   },
   "devDependencies": {

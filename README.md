@@ -162,11 +162,77 @@ To run from a checkout without installing: `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 
 from the repository root. No publishing step is required; the marketplace is
 just the repo's `.claude-plugin/marketplace.json`.
 
+## Pi extension
+
+`pi/extension.ts` is the same idea for Pi. Pi has no hook that replaces a
+summary with the original messages, but it has an append-only `context_edit`
+entry: a later entry can omit an earlier entry from model context or replace
+its content, while every raw message stays in the session file. The adapter
+uses that, so it never summarizes. When the context crosses
+`compactAtPercent` at the end of a turn it asks Jev about the tool calls
+outside the pinned first and newest messages and appends the edits Jev's
+answers call for:
+
+- `drop_call` — the tool call is removed from its assistant message and its
+tool result entry is omitted;
+- `drop_result` — the tool result keeps its first `truncateHeadChars`
+  characters plus a note;
+- `keep` — nothing is touched.
+
+User and assistant text stays verbatim. A call is asked about once per
+session; Pi's own summary compaction remains the fallback when Jev fails, the
+key is missing, or the history cannot be fitted into the state budget. Each
+prune reports itself as `fast-jev-compaction: N call(s) dropped, M result(s)
+truncated; tool output down P% in R request(s)`.
+
+### Manual triggering
+
+The Jev pass is not tied to compaction. It runs at the end of every turn once
+the context reaches `FAST_JEV_COMPACT_AT_PERCENT`, so lower that variable to
+prune earlier or to force a pass on your next message.
+
+`/compact` is intercepted for the `manual` reason only: the adapter runs a Jev
+pass and, when nothing is left to drop, cancels Pi's summary so the history
+stays verbatim. When Jev does find something, those edits need a turn boundary
+to apply, so Pi's summary runs instead. Threshold and overflow compactions are
+never cancelled — those are capacity emergencies.
+
+`/jev-prune` asks Jev immediately and queues the edits, which apply at the end
+of your next turn. A slash command cannot append `context_edit` entries itself;
+only a turn boundary can, which is why the edits wait for one turn.
+
+### Install in Pi
+
+From a checkout:
+
+```sh
+pi -e ./pi/extension.ts          # try it for one invocation
+pi install ./                    # or install this repository as a Pi package
+```
+
+The package declares its extension under the `pi` key in `package.json`, so
+`pi install npm:fast-jev-compaction` works once the package is published. The
+same `TYPESAFE_API_KEY` is used; the other options are read from the
+environment:
+
+| Variable | Default |
+| --- | ---: |
+| `TYPESAFE_API_KEY` | — |
+| `FAST_JEV_MODEL` | `jev-latest` |
+| `FAST_JEV_BASE_URL` | System One endpoint |
+| `FAST_JEV_COMPACT_AT_PERCENT` | `60` |
+| `FAST_JEV_KEEP_THRESHOLD` | `0.5` |
+| `FAST_JEV_PRESERVE_RECENT_MESSAGES` | `6` |
+| `FAST_JEV_TRUNCATE_HEAD_CHARS` | `300` |
+
+The adapter uses the Pi extension surface as of 0.52; the checked-in subset is
+`types/pi.d.ts`. Regenerate and review it after a Pi upgrade.
+
 ## Development
 
 ```sh
 npm install
-npm run typecheck        # library + hook
+npm run typecheck        # library + hook + pi extension
 npm test
 npm run build
 npm run validate:plugin  # claude plugin validate
