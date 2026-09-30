@@ -14,6 +14,9 @@
   "pi": {
     "extensions": ["./pi/extension.ts"]
   },
+  "omp": {
+    "extensions": ["./omp/extension.ts"]
+  },
   "engines": {
     "node": ">=18"
   },
@@ -26,17 +29,19 @@
   "files": [
     "dist",
     "pi",
+    "omp",
     "src",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit && npm run typecheck:hooks && npm run typecheck:pi",
+    "typecheck": "tsc --noEmit && npm run typecheck:hooks && npm run typecheck:pi && npm run typecheck:omp",
     "test": "vitest run",
     "demo": "tsx examples/demo.ts",
     "typecheck:hooks": "tsc -p tsconfig.hooks.json",
     "typecheck:pi": "tsc -p tsconfig.pi.json",
+    "typecheck:omp": "tsc -p tsconfig.omp.json",
     "validate:plugin": "claude plugin validate .claude-plugin/plugin.json"
   },
   "devDependencies": {
