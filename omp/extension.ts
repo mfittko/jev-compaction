@@ -151,7 +151,14 @@ function applyDecisions(messages: AgentMessage[], decisions: ReadonlyMap<string,
       if (message.content.some(shouldDrop)) {
         const content = message.content.filter((block) => !shouldDrop(block));
         changed = true;
-        if (content.length > 0) kept.push({ ...message, content });
+        if (content.length > 0) {
+          const projected = { ...message, content };
+          // Native replay payloads still contain the removed calls. Let the
+          // provider serialize the projected content instead; keep the raw
+          // journal message and unchanged assistants' payloads intact.
+          delete projected.providerPayload;
+          kept.push(projected);
+        }
         continue;
       }
     } else if (message.role === 'toolResult' && paired.has(message.toolCallId)) {

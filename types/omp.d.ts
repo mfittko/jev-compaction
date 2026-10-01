@@ -47,6 +47,8 @@ declare module '@oh-my-pi/pi-ai' {
       | { type: 'fallback'; from: { model: string }; to: { model: string } }
       | { type: 'anthropicServerTool'; block: unknown }
     )[];
+    /** Opaque transport-native history, invalidated when assistant content changes. */
+    providerPayload?: unknown;
     timestamp: number;
     [key: string]: unknown;
   }

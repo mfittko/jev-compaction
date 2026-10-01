@@ -193,6 +193,43 @@ describe('omp context pruning', () => {
     expect(h.entries().filter((entry) => entry.type === 'message').map((entry) => entry.message)).toEqual(original);
   });
 
+  it('invalidates native replay history only for an assistant whose calls were pruned', async () => {
+    const mixed = assistant('Keep this explanation.', 'discard', 'retain');
+    mixed.providerPayload = {
+      type: 'openaiResponsesHistory',
+      provider: 'openai',
+      dt: true,
+      items: [
+        { type: 'message', role: 'assistant', content: [{ type: 'output_text', text: 'Keep this explanation.' }] },
+        { type: 'function_call', call_id: 'discard', name: 'read', arguments: '{"path":"discard.ts"}' },
+        { type: 'function_call', call_id: 'retain', name: 'read', arguments: '{"path":"retain.ts"}' },
+      ],
+    };
+    const tail = assistant('Continue from the retained evidence.');
+    tail.providerPayload = {
+      type: 'openaiResponsesHistory',
+      provider: 'openai',
+      dt: true,
+      items: [{ type: 'message', role: 'assistant', content: [{ type: 'output_text', text: 'Continue from the retained evidence.' }] }],
+    };
+    const messages = [user('Investigate the bug.'), mixed, result('discard'), result('retain'), tail];
+    const original = structuredClone(messages);
+    const h = harness(branch(messages), jev((name) => name.endsWith('_t2') ? 0.9 : 0.1));
+
+    const out = await h.request(messages);
+
+    expect(toolIds(out)).toEqual(['retain']);
+    expect(resultIds(out)).toEqual(['retain']);
+    const projected = out[1] as Assistant;
+    expect(projected.content).toEqual([mixed.content[0], mixed.content[2]]);
+    // Native serializers must fall back to the projected content, not replay
+    // the old function_call items (and repair a result for the discarded call).
+    expect(projected).not.toHaveProperty('providerPayload');
+    expect(out.at(-1)).toBe(tail);
+    expect(messages).toEqual(original);
+    expect(h.entries().filter((entry) => entry.type === 'message').map((entry) => entry.message)).toEqual(original);
+  });
+
   it('truncates only result text while retaining image blocks and result metadata', async () => {
     const call = assistant('Keep the call and the screenshot.', 'image-read');
     const image = { type: 'image' as const, mimeType: 'image/png', data: 'aW1hZ2U=' };

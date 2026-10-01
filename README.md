@@ -239,6 +239,9 @@ At `FAST_JEV_COMPACT_AT_PERCENT` (60% by default), it also asks Jev about
 unscored tool calls outside the pinned first and recent messages. Dropped
 calls and results disappear together; truncated results retain their text
 head, image blocks, and metadata. User/assistant prose stays verbatim.
+When assistant calls are removed, that request's projection omits the assistant's
+native replay payload so the provider serializes the pruned content instead of
+restoring removed calls. Unchanged assistants retain their replay metadata.
 
 Choices, including `keep`, are stored as custom session entries and restored
 from the active branch after reload, resume, or tree navigation. Raw message
