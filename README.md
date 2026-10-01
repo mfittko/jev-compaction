@@ -288,6 +288,9 @@ TYPESAFE_API_KEY="$(cat ~/.typesafe_key)" npm run demo
 The unit tests use a fake Jev and never contact TypeSafe. The demo is the live
 network check.
 
+GitHub CI uses Node.js 22 and runs `npm ci`, `npm run typecheck`, and `npm test`
+for pull requests targeting `main` and pushes to `main` or `feat/omp-jev-compaction`.
+
 ## Animated demo (macOS)
 
 `demo/JevDemo` is a small native SwiftUI app that plays a scripted, dramatized
