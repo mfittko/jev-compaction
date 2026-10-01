@@ -228,11 +228,57 @@ environment:
 The adapter uses the Pi extension surface as of 0.52; the checked-in subset is
 `types/pi.d.ts`. Regenerate and review it after a Pi upgrade.
 
+## omp extension
+
+`omp/extension.ts` is a separate adapter for Oh My Pi, verified against omp
+18.4.4. It uses omp's supported `context` hook rather than Pi's
+`context_edit` entries or `buildSessionProjection`.
+
+Before a provider request, the adapter reapplies recorded pruning choices.
+At `FAST_JEV_COMPACT_AT_PERCENT` (60% by default), it also asks Jev about
+unscored tool calls outside the pinned first and recent messages. Dropped
+calls and results disappear together; truncated results retain their text
+head, image blocks, and metadata. User/assistant prose stays verbatim.
+When assistant calls are removed, that request's projection omits the assistant's
+native replay payload so the provider serializes the pruned content instead of
+restoring removed calls. Unchanged assistants retain their replay metadata.
+
+Choices, including `keep`, are stored as custom session entries and restored
+from the active branch after reload, resume, or tree navigation. Raw message
+entries remain intact. Every batch must succeed before choices are recorded;
+missing credentials or a failed request record no new choices.
+
+`/jev-prune` scores the current branch immediately, even below the threshold;
+its recorded choices apply before the next provider request. It does not
+start a model turn. Unlike the Pi adapter, it does not intercept `/compact`:
+omp's built-in compaction remains the fallback and may summarize the raw
+history.
+
+Install from a checkout (user scope):
+
+```sh
+export TYPESAFE_API_KEY=...
+omp -e ./omp/extension.ts          # one invocation
+omp plugin install ./
+```
+
+Restart omp to discover the installed extension. The package declares both
+`omp.extensions` and `pi.extensions`, so each host loads its own adapter.
+It uses the same environment options listed above. Jev requests send
+conversation text and tool inputs to the configured TypeSafe endpoint;
+full tool outputs are represented by short notes.
+
+omp does not expose a context-hook abort signal. The existing HTTP client
+has a 30-second timeout; a valid same-branch response may be recorded after
+a host request is interrupted, for use by a later request. Session, branch,
+tree, and shutdown checks prevent late responses from recording choices
+under a different owner.
+
 ## Development
 
 ```sh
 npm install
-npm run typecheck        # library + hook + pi extension
+npm run typecheck        # library + hook + pi/omp extensions
 npm test
 npm run build
 npm run validate:plugin  # claude plugin validate
@@ -241,6 +287,14 @@ TYPESAFE_API_KEY="$(cat ~/.typesafe_key)" npm run demo
 
 The unit tests use a fake Jev and never contact TypeSafe. The demo is the live
 network check.
+
+GitHub CI uses Node.js 22 and runs `npm ci`, `npm run typecheck`, and `npm test`
+for pull requests targeting `main` and pushes to `main` or `feat/omp-jev-compaction`.
+
+The tracked `.devloops` enables persistent strict latest-head Copilot convergence:
+significant product, test, config, or CI changes after a converged review require
+a fresh Copilot cycle. Pure doc-only or integrate-only bumps may carry prior
+convergence. This policy does not authorize merging.
 
 ## Animated demo (macOS)
 

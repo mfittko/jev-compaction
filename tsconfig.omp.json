@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["es2023", "dom"],
+    "types": ["node"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@oh-my-pi/pi-coding-agent": ["types/omp.d.ts"],
+      "@oh-my-pi/pi-agent-core": ["types/omp.d.ts"],
+      "@oh-my-pi/pi-ai": ["types/omp.d.ts"],
+      "@earendil-works/pi-coding-agent": ["types/pi.d.ts"]
+    }
+  },
+  "include": ["omp", "types"]
+}
