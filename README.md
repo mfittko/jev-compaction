@@ -291,6 +291,11 @@ network check.
 GitHub CI uses Node.js 22 and runs `npm ci`, `npm run typecheck`, and `npm test`
 for pull requests targeting `main` and pushes to `main` or `feat/omp-jev-compaction`.
 
+The tracked `.devloops` enables persistent strict latest-head Copilot convergence:
+significant product, test, config, or CI changes after a converged review require
+a fresh Copilot cycle. Pure doc-only or integrate-only bumps may carry prior
+convergence. This policy does not authorize merging.
+
 ## Animated demo (macOS)
 
 `demo/JevDemo` is a small native SwiftUI app that plays a scripted, dramatized
